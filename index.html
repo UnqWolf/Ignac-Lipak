@@ -27,7 +27,7 @@
             left: 0;
             width: 100%;
             background: #222;
-            padding: 10px;
+            padding: 5px;
             text-align: center;
             z-index: 1000;
         }
@@ -35,10 +35,11 @@
             background: #ff3333;
             color: white;
             border: none;
-            padding: 8px 15px;
+            padding: 3px 6px;
+            font-size: 10px;
             font-weight: bold;
             cursor: pointer;
-            border-radius: 4px;
+            border-radius: 3px;
         }
         .editable-active {
             outline: 2px dashed #ff3333;
@@ -54,9 +55,9 @@
         <p contenteditable="false" id="szoveg">Szia! Én vagyok Ignác.</p>
     </div>
 
-    <!-- Admin Mód Vezérlő Gomb (szöveg nélkül) -->
+    <!-- Nagyon pici Admin Mód Gomb -->
     <div class="admin-bar">
-        <button onclick="toggleAdminMode()" id="adminGomb">Admin Mód Bekapcsolása</button>
+        <button onclick="toggleAdminMode()" id="adminGomb">Admin</button>
     </div>
 
     <script>
@@ -86,7 +87,7 @@
             const gomb = document.getElementById('adminGomb');
 
             if (adminModeOn) {
-                gomb.innerText = "Mentés az Adatbázisba";
+                gomb.innerText = "Mentés";
                 gomb.style.background = "#33cc33";
                 
                 cimElem.contentEditable = "true";
@@ -95,7 +96,7 @@
                 cimElem.classList.add('editable-active');
                 szovegElem.classList.add('editable-active');
             } else {
-                gomb.innerText = "Admin Mód Bekapcsolása";
+                gomb.innerText = "Admin";
                 gomb.style.background = "#ff3333";
                 
                 cimElem.contentEditable = "false";
