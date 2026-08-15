@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ignác oldala</title>
-    <!-- Betöltjük a Cloudflare Turnstile szkriptjét -->
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <!-- Betöltjük a Google reCAPTCHA szkriptjét -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
         body {
             background-color: #ffffff;
@@ -22,15 +22,15 @@
         .captcha-container {
             margin-top: 20px;
         }
-        /* Alapból elrejtjük a tartalmat, amíg nincs pipa */
+        /* Alapból elrejtjük a tartalmat */
         #titkos-tartalom {
             display: none;
             margin-top: 20px;
         }
     </style>
     <script>
-        // Ez a függvény fut le, ha sikerült a pipa
-        function onTurnstileSuccess(token) {
+        // Ez a függvény fut le, ha a reCAPTCHA-t sikeresen kipipálták
+        function onRecaptchaSuccess(token) {
             document.querySelector('.captcha-container').style.display = 'none';
             document.getElementById('titkos-tartalom').style.display = 'block';
         }
@@ -38,13 +38,14 @@
 </head>
 <body>
 
-    <!-- A captcha doboz, ami először látszik -->
+    <!-- A reCAPTCHA doboz -->
     <div class="captcha-container">
         <p>Kérlek, igazold, hogy nem vagy robot:</p>
-        <div class="cf-turnstile" data-sitekey="0x4AAAAAAAEq3ukenL1JXIn6j" data-callback="onTurnstileSuccess"></div>
+        <!-- Google teszt kulcs -->
+        <div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" data-callback="onRecaptchaSuccess"></div>
     </div>
 
-    <!-- Ez a rész csak a sikeres ellenőrzés után jön elő -->
+    <!-- Ez a rész csak a pipa után jön elő -->
     <div id="titkos-tartalom">
         <h1>Üdvözöllek a weboldalamon!</h1>
         <p>Szia! Én vagyok Ignác.</p>
