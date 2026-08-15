@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ignác oldala</title>
+    <!-- Betöltjük a Cloudflare Turnstile szkriptjét -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <style>
         body {
             background-color: #ffffff;
@@ -17,13 +19,39 @@
             border-bottom: 1px solid #cccccc;
             padding-bottom: 5px;
         }
+        .captcha-container {
+            margin-top: 20px;
+        }
+        /* Alapból rejtve van a tartalom */
+        #titkos-tartalom {
+            display: none;
+            margin-top: 20px;
+        }
     </style>
+    <script>
+        // Ez a függvény fut le, ha sikerült a pipa
+        function onTurnstileSuccess(token) {
+            // Elrejtjük a captchát
+            document.querySelector('.captcha-container').style.display = 'none';
+            // Megjelenítjük a rejtett tartalmat
+            document.getElementById('titkos-tartalom').style.display = 'block';
+        }
+    </script>
 </head>
 <body>
 
-    <h1>Üdvözöllek a weboldalamon!</h1>
-    
-    <p>Szia! Én vagyok Ignác.</p>
+    <!-- A captcha doboz, ami alapból látszik -->
+    <div class="captcha-container">
+        <p>Kérlek, igazold, hogy nem vagy robot:</p>
+        <!-- Hozzáadtuk a data-callback attribútumot, ami hívja a függvényt -->
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAAAEq3ukenL1JXIn6j" data-callback="onTurnstileSuccess"></div>
+    </div>
+
+    <!-- Ez a rész csak akkor jön elő, ha a pipa megvolt -->
+    <div id="titkos-tartalom">
+        <h1>Üdvözöllek a weboldalamon!</h1>
+        <p>Szia! Én vagyok Ignác.</p>
+    </div>
 
 </body>
 </html>
