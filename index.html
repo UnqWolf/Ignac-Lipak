@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ignác oldala</title>
-    <!-- Betöltjük a Google reCAPTCHA szkriptjét -->
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <!-- Firebase SDK betöltése -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
         body {
             background-color: #ffffff;
@@ -13,42 +14,104 @@
             font-family: "Times New Roman", Times, serif;
             margin: 40px;
             line-height: 1.6;
+            padding-bottom: 60px;
         }
         h1 {
             color: #0000cc;
             border-bottom: 1px solid #cccccc;
             padding-bottom: 5px;
         }
-        .captcha-container {
-            margin-top: 20px;
+        .admin-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #222;
+            padding: 10px;
+            text-align: center;
+            z-index: 1000;
         }
-        /* Alapból elrejtjük a tartalmat */
-        #titkos-tartalom {
-            display: none;
-            margin-top: 20px;
+        .admin-bar button {
+            background: #ff3333;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .editable-active {
+            outline: 2px dashed #ff3333;
+            background-color: rgba(255, 0, 0, 0.05);
         }
     </style>
-    <script>
-        // Ez a függvény fut le, ha a reCAPTCHA-t sikeresen kipipálták
-        function onRecaptchaSuccess(token) {
-            document.querySelector('.captcha-container').style.display = 'none';
-            document.getElementById('titkos-tartalom').style.display = 'block';
-        }
-    </script>
 </head>
 <body>
 
-    <!-- A reCAPTCHA doboz a te Site key-ddel -->
-    <div class="captcha-container">
-        <p>Kérlek, igazold, hogy nem vagy robot:</p>
-        <div class="g-recaptcha" data-sitekey="6LccpIctAAAAAJ8-HO2hba1QTwODRYv5aSu48Ajq" data-callback="onRecaptchaSuccess"></div>
+    <!-- A főoldal tartalma -->
+    <div id="szerkesztheto-tartalom">
+        <h1 contenteditable="false" id="cim">Üdvözöllek a weboldalamon!</h1>
+        <p contenteditable="false" id="szoveg">Szia! Én vagyok Ignác.</p>
     </div>
 
-    <!-- Ez a rész csak a pipa után jön elő -->
-    <div id="titkos-tartalom">
-        <h1>Üdvözöllek a weboldalamon!</h1>
-        <p>Szia! Én vagyok Ignác.</p>
+    <!-- Admin Mód Vezérlő Gomb (szöveg nélkül) -->
+    <div class="admin-bar">
+        <button onclick="toggleAdminMode()" id="adminGomb">Admin Mód Bekapcsolása</button>
     </div>
+
+    <script>
+        // 1. Firebase konfiguráció
+        const firebaseConfig = {
+            databaseURL: "https://vercel-custom-il-default-rtdb.europe-west1.firebasedatabase.app/"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        const cimElem = document.getElementById('cim');
+        const szovegElem = document.getElementById('szoveg');
+
+        // 2. Adatok automatikus betöltése az oldal megnyitásakor
+        db.ref('oldalAdatok').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                if (data.cim) cimElem.innerText = data.cim;
+                if (data.szoveg) szovegElem.innerText = data.szoveg;
+            }
+        });
+
+        let adminModeOn = false;
+
+        function toggleAdminMode() {
+            adminModeOn = !adminModeOn;
+            const gomb = document.getElementById('adminGomb');
+
+            if (adminModeOn) {
+                gomb.innerText = "Mentés az Adatbázisba";
+                gomb.style.background = "#33cc33";
+                
+                cimElem.contentEditable = "true";
+                szovegElem.contentEditable = "true";
+                
+                cimElem.classList.add('editable-active');
+                szovegElem.classList.add('editable-active');
+            } else {
+                gomb.innerText = "Admin Mód Bekapcsolása";
+                gomb.style.background = "#ff3333";
+                
+                cimElem.contentEditable = "false";
+                szovegElem.contentEditable = "false";
+                
+                cimElem.classList.remove('editable-active');
+                szovegElem.classList.remove('editable-active');
+
+                // Adatok csendes mentése a Firebase-be
+                db.ref('oldalAdatok').set({
+                    cim: cimElem.innerText,
+                    szoveg: szovegElem.innerText
+                });
+            }
+        }
+    </script>
 
 </body>
 </html>
