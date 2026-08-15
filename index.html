@@ -14,32 +14,30 @@
             font-family: "Times New Roman", Times, serif;
             margin: 40px;
             line-height: 1.6;
-            padding-bottom: 60px;
         }
         h1 {
             color: #0000cc;
             border-bottom: 1px solid #cccccc;
             padding-bottom: 5px;
         }
-        .admin-bar {
+        /* Diszkrét, négyzet alakú gomb a jobb alsó sarokban */
+        .admin-btn {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: #222;
-            padding: 5px;
-            text-align: center;
-            z-index: 1000;
-        }
-        .admin-bar button {
+            bottom: 20px;
+            right: 20px;
+            width: 30px;
+            height: 30px;
             background: #ff3333;
             color: white;
             border: none;
-            padding: 3px 6px;
-            font-size: 10px;
-            font-weight: bold;
+            font-size: 14px;
             cursor: pointer;
-            border-radius: 3px;
+            border-radius: 4px;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .editable-active {
             outline: 2px dashed #ff3333;
@@ -55,10 +53,8 @@
         <p contenteditable="false" id="szoveg">Szia! Én vagyok Ignác.</p>
     </div>
 
-    <!-- Nagyon pici Admin Mód Gomb -->
-    <div class="admin-bar">
-        <button onclick="toggleAdminMode()" id="adminGomb">Admin</button>
-    </div>
+    <!-- Jobb alsó sarok admin gomb -->
+    <button class="admin-btn" onclick="toggleAdminMode()" id="adminGomb" title="Admin">⚙️</button>
 
     <script>
         // 1. Firebase konfiguráció
@@ -87,7 +83,7 @@
             const gomb = document.getElementById('adminGomb');
 
             if (adminModeOn) {
-                gomb.innerText = "Mentés";
+                gomb.innerText = "💾";
                 gomb.style.background = "#33cc33";
                 
                 cimElem.contentEditable = "true";
@@ -96,7 +92,7 @@
                 cimElem.classList.add('editable-active');
                 szovegElem.classList.add('editable-active');
             } else {
-                gomb.innerText = "Admin";
+                gomb.innerText = "⚙️";
                 gomb.style.background = "#ff3333";
                 
                 cimElem.contentEditable = "false";
