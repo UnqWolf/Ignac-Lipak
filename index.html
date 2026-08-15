@@ -22,7 +22,7 @@
         .captcha-container {
             margin-top: 20px;
         }
-        /* Alapból rejtve van a tartalom */
+        /* Alapból elrejtjük a tartalmat, amíg nincs pipa */
         #titkos-tartalom {
             display: none;
             margin-top: 20px;
@@ -31,23 +31,20 @@
     <script>
         // Ez a függvény fut le, ha sikerült a pipa
         function onTurnstileSuccess(token) {
-            // Elrejtjük a captchát
             document.querySelector('.captcha-container').style.display = 'none';
-            // Megjelenítjük a rejtett tartalmat
             document.getElementById('titkos-tartalom').style.display = 'block';
         }
     </script>
 </head>
 <body>
 
-    <!-- A captcha doboz, ami alapból látszik -->
+    <!-- A captcha doboz, ami először látszik -->
     <div class="captcha-container">
         <p>Kérlek, igazold, hogy nem vagy robot:</p>
-        <!-- Hozzáadtuk a data-callback attribútumot, ami hívja a függvényt -->
         <div class="cf-turnstile" data-sitekey="0x4AAAAAAAEq3ukenL1JXIn6j" data-callback="onTurnstileSuccess"></div>
     </div>
 
-    <!-- Ez a rész csak akkor jön elő, ha a pipa megvolt -->
+    <!-- Ez a rész csak a sikeres ellenőrzés után jön elő -->
     <div id="titkos-tartalom">
         <h1>Üdvözöllek a weboldalamon!</h1>
         <p>Szia! Én vagyok Ignác.</p>
