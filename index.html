@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ignác oldala - Wix Style Builder</title>
+    <title>Ignác oldala</title>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -47,7 +47,7 @@
             margin-top: 20px;
         }
 
-        /* Wix-szerű szabad vászon (Canvas) */
+        /* Szabad vászon (Canvas) */
         #wix-canvas {
             position: relative;
             width: 100%;
@@ -56,7 +56,7 @@
             transition: width 0.2s ease, padding 0.2s ease;
         }
 
-        /* Admin módban a keret eltolása belső margóval (nincs fehér sáv kilógás) */
+        /* Admin módban a keret eltolása belső margóval */
         body.admin-active #wix-canvas {
             padding-top: 60px;
             width: calc(100% - 280px);
@@ -125,8 +125,9 @@
         }
         #admin-toolbar button:hover { background: #3b3b55; }
         #admin-toolbar button.save-btn { background: #28a745; border-color: #28a745; font-weight: bold; }
+        #admin-toolbar button.clear-btn { background: #dc3545; border-color: #dc3545; }
 
-        /* Jobb oldali Testreszabási Panel (Inspector) */
+        /* Jobb oldali Testreszabási Panel */
         #inspector-panel {
             display: none;
             position: fixed; top: 52px; right: 0; width: 280px; height: calc(100vh - 52px);
@@ -156,7 +157,7 @@
         <button class="bypass-btn" onclick="bypassCaptcha()">Belépés jelszóval (bypass)</button>
     </div>
 
-    <!-- Fő Weboldal Munkaterület (Alapból TELJESEN ÜRES) -->
+    <!-- Fő Weboldal Munkaterület (Teljesen üres) -->
     <div id="main-content" style="display:none;">
         <div id="wix-canvas"></div>
     </div>
@@ -167,12 +168,13 @@
     <!-- Felső Admin Eszköztár -->
     <div id="admin-toolbar">
         <div>
-            <strong style="color: #4da6ff; margin-right: 15px;">🎨 Wix-Style Builder</strong>
+            <strong style="color: #4da6ff; margin-right: 15px;">🎨 Szerkesztő</strong>
             <button onclick="addElement('heading')">+ Címsor</button>
             <button onclick="addElement('text')">+ Szöveg</button>
             <button onclick="addImage()">+ Kép</button>
             <button onclick="addButton()">+ Gomb</button>
             <button onclick="changeCanvasBg()">Háttérszín</button>
+            <button class="clear-btn" onclick="clearAllCanvas()">🗑️ Oldal ürítése</button>
         </div>
         <div>
             <button class="save-btn" onclick="saveAndExit()">💾 Mentés & Kilépés</button>
@@ -283,7 +285,7 @@
         db.ref('oldalAdatok').on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
-                if (data.html) canvas.innerHTML = data.html;
+                if (data.html !== undefined) canvas.innerHTML = data.html;
                 if (data.bgColor) {
                     canvas.style.backgroundColor = data.bgColor;
                     document.body.style.backgroundColor = data.bgColor;
@@ -411,6 +413,15 @@
         function deleteSelected() {
             if (selectedElement && confirm("Biztosan törlöd a kijelölt elemet?")) {
                 selectedElement.remove();
+                selectedElement = null;
+                document.getElementById('no-selection').style.display = 'block';
+                document.getElementById('selection-controls').style.display = 'none';
+            }
+        }
+
+        function clearAllCanvas() {
+            if (confirm("Biztosan törölni szeretnél MINDEN elemet az oldalról?")) {
+                canvas.innerHTML = '';
                 selectedElement = null;
                 document.getElementById('no-selection').style.display = 'block';
                 document.getElementById('selection-controls').style.display = 'none';
