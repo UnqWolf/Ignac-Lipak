@@ -9,7 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <!-- Google reCAPTCHA -->
     <script src="https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit" async defer></script>
-    <!-- SortableJS a Drag & Drop funkcionalitáshoz -->
+    <!-- SortableJS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
         #captcha-overlay {
@@ -23,6 +23,20 @@
             justify-content: center;
             align-items: center;
             font-family: sans-serif;
+        }
+
+        .bypass-btn {
+            background: transparent;
+            border: none;
+            color: #777;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 13px;
+            margin-top: 20px;
+        }
+
+        .bypass-btn:hover {
+            color: #000;
         }
 
         body {
@@ -88,7 +102,6 @@
             cursor: grabbing;
         }
 
-        /* Húzás közbeni vizuális visszajelzés */
         .sortable-ghost {
             opacity: 0.3;
             background: #ffcccc !important;
@@ -105,6 +118,7 @@
     <div id="captcha-overlay">
         <h2>Kérjük, igazold, hogy nem vagy robot!</h2>
         <div id="recaptcha-widget"></div>
+        <button class="bypass-btn" onclick="bypassCaptcha()">Belépés jelszóval (bypass)</button>
     </div>
 
     <!-- Fő Weboldal Tartalom -->
@@ -147,10 +161,24 @@
             grecaptcha.render('recaptcha-widget', {
                 'sitekey': '6LccpIctAAAAAJ8-HO2hba1QTwODRYv5aSu48Ajq',
                 'callback': function(response) {
-                    document.getElementById('captcha-overlay').style.display = 'none';
-                    document.getElementById('main-content').style.display = 'block';
+                    unlockPage();
                 }
             });
+        }
+
+        // reCAPTCHA átugrása jelszóval
+        function bypassCaptcha() {
+            let jelszo = prompt("Add meg a bypass jelszót:");
+            if (jelszo === HelyesJelszo) {
+                unlockPage();
+            } else if (jelszo !== null) {
+                alert("Hibás jelszó!");
+            }
+        }
+
+        function unlockPage() {
+            document.getElementById('captcha-overlay').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
         }
 
         // 3. Adatok betöltése
@@ -179,9 +207,7 @@
             }
         }
 
-        // Drag and drop + szerkesztés aktiválása
         function enableEditingAndDrag() {
-            // SortableJS elindítása
             sortableInstance = new Sortable(contentArea, {
                 animation: 150,
                 ghostClass: 'sortable-ghost',
@@ -189,7 +215,6 @@
                 draggable: '.drag-item'
             });
 
-            // Elemek szerkeszthetővé tétele
             refreshItems();
         }
 
@@ -205,7 +230,6 @@
             });
         }
 
-        // Elemek hozzáadása (Cím, Szöveg)
         function addElement(tag) {
             const wrapper = document.createElement('div');
             wrapper.className = 'drag-item';
@@ -218,7 +242,6 @@
             refreshItems();
         }
 
-        // Kép hozzáadása
         function addImage() {
             let url = prompt("Add meg a kép URL címét:");
             if (url) {
@@ -234,7 +257,6 @@
             }
         }
 
-        // Gomb hozzáadása
         function addButton() {
             let text = prompt("Gomb szövege:", "Kattints ide");
             let link = prompt("Hova mutasson a gomb? (URL):", "https://");
@@ -254,7 +276,6 @@
             }
         }
 
-        // Háttérszín
         function changeBgColor() {
             let color = prompt("Háttérszín (pl. #ffffff, #f4f4f4, lightgray):");
             if (color) {
@@ -262,25 +283,21 @@
             }
         }
 
-        // Mentés és Kilépés
         function saveAndExit() {
             adminModeOn = false;
             document.body.classList.remove('admin-active');
             document.getElementById('admin-toolbar').style.display = 'none';
 
-            // Drag and drop leállítása
             if (sortableInstance) {
                 sortableInstance.destroy();
             }
 
-            // Szerkeszthetőség kikapcsolása a mentés előtt
             const items = contentArea.querySelectorAll('.drag-item');
             items.forEach(item => {
                 item.contentEditable = "false";
                 item.ondblclick = null;
             });
 
-            // Mentés Firebase-be
             db.ref('oldalAdatok').set({
                 html: contentArea.innerHTML,
                 bgColor: document.body.style.backgroundColor
