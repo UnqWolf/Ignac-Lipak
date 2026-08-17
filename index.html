@@ -3,15 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ignác oldala</title>
+    <title>Ignác oldala - Wix Style Builder</title>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <!-- Google reCAPTCHA -->
     <script src="https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit" async defer></script>
-    <!-- SortableJS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <!-- Google Fonts Betűtípusok -->
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime&family=Lobster&family=Montserrat:wght@400;700&family=Open+Sans:wght@400;700&family=Oswald:wght@500&family=Pacifico&family=Playfair+Display:ital,wght@0,600;1,400&family=Poppins:wght@400;600&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
     <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            font-family: 'Roboto', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* reCAPTCHA Kapu */
         #captcha-overlay {
             position: fixed;
             top: 0; left: 0;
@@ -24,7 +36,6 @@
             align-items: center;
             font-family: sans-serif;
         }
-
         .bypass-btn {
             background: transparent;
             border: none;
@@ -35,93 +46,96 @@
             margin-top: 20px;
         }
 
-        body {
+        /* Wix-szerű szabad vászon (Canvas) */
+        #wix-canvas {
+            position: relative;
+            width: 100%;
+            min-height: 100vh;
             background-color: #ffffff;
-            color: #000000;
-            font-family: "Times New Roman", Times, serif;
-            margin: 40px;
-            line-height: 1.6;
+            overflow: hidden;
         }
 
-        #main-content { display: none; }
-        h1, h2 { color: #0000cc; margin-top: 0; }
-        img { max-width: 100%; height: auto; display: block; }
-        
-        .btn-link {
+        /* Szabadon mozgatható elemek stílusa */
+        .wix-element {
+            position: absolute;
+            padding: 10px;
+            min-width: 100px;
+            min-height: 30px;
+            cursor: default;
+            user-select: none;
             display: inline-block;
-            padding: 8px 16px;
-            background: #0000cc;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
         }
 
-        /* Normál nézetben rejtett elemek */
-        .drag-handle { display: none; }
+        .wix-element img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            pointer-events: none;
+        }
+
+        .wix-element a.btn-link {
+            display: inline-block;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        /* Admin Aktív Stílusok */
+        .admin-active .wix-element {
+            outline: 1px dashed #2196F3;
+            cursor: move;
+        }
+        .admin-active .wix-element.selected {
+            outline: 2px solid #ff3333 !important;
+            box-shadow: 0 0 10px rgba(255, 51, 51, 0.3);
+        }
+
+        /* Rejtett gomb a jobb alsó sarokban */
         .secret-admin-trigger {
             position: fixed; bottom: 0; right: 0;
             width: 40px; height: 40px;
             background: transparent; border: none;
-            cursor: pointer; z-index: 1000;
+            cursor: pointer; z-index: 5000;
         }
 
-        /* Admin Eszköztár */
+        /* Top Admin Eszköztár */
         #admin-toolbar {
             display: none;
-            position: fixed; top: 15px; right: 15px;
-            background: #111111; padding: 10px 15px;
-            border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-            z-index: 2000; font-family: sans-serif;
-            gap: 6px; align-items: center; flex-wrap: wrap;
+            position: fixed; top: 0; left: 0; width: 100%;
+            background: #1e1e2d; color: white;
+            padding: 10px 20px; z-index: 6000;
+            font-family: sans-serif;
+            align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
 
         #admin-toolbar button {
-            background: #333; color: white; border: 1px solid #555;
-            padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;
+            background: #2b2b40; color: #fff; border: 1px solid #444;
+            padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 13px;
+            margin-right: 5px;
         }
-
-        #admin-toolbar button:hover { background: #555; }
+        #admin-toolbar button:hover { background: #3b3b55; }
         #admin-toolbar button.save-btn { background: #28a745; border-color: #28a745; font-weight: bold; }
 
-        /* Admin Aktív Stílusok: Átméretezés + Fogantyú */
-        .admin-active .drag-item {
-            position: relative;
-            outline: 2px dashed #007bff !important;
-            background-color: rgba(0, 123, 255, 0.03);
-            padding: 25px 10px 10px 10px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-            /* ÁTMÉRETEZHETŐSÉG */
-            resize: both;
-            overflow: auto;
-            min-height: 40px;
-            min-width: 150px;
+        /* Jobb oldali Testreszabási Panel (Inspector) */
+        #inspector-panel {
+            display: none;
+            position: fixed; top: 52px; right: 0; width: 280px; height: calc(100vh - 52px);
+            background: #2b2b40; color: white;
+            padding: 15px; z-index: 5900;
+            font-family: sans-serif; font-size: 13px;
+            overflow-y: auto;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.3);
         }
 
-        .admin-active .drag-handle {
-            display: inline-block;
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            background: #007bff;
-            color: white;
-            font-size: 10px;
-            font-family: sans-serif;
-            padding: 2px 6px;
-            border-radius: 2px;
-            cursor: grab;
-            user-select: none;
-            z-index: 10;
+        #inspector-panel h3 { margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 8px; font-size: 15px; }
+        .control-group { margin-bottom: 12px; }
+        .control-group label { display: block; margin-bottom: 4px; color: #aaa; }
+        .control-group input, .control-group select {
+            width: 100%; padding: 6px; background: #1e1e2d; border: 1px solid #444; color: white; border-radius: 4px;
         }
-
-        .admin-active .drag-handle:active {
-            cursor: grabbing;
-        }
-
-        .sortable-ghost {
-            opacity: 0.3;
-            background: #cce5ff !important;
-        }
+        .control-group input[type="color"] { height: 35px; padding: 2px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -133,32 +147,100 @@
         <button class="bypass-btn" onclick="bypassCaptcha()">Belépés jelszóval (bypass)</button>
     </div>
 
-    <!-- Fő Weboldal Tartalom -->
-    <div id="main-content">
-        <div id="szerkesztheto-tartalom">
-            <div class="drag-item">
-                <span class="drag-handle">⋮⋮ Húzás</span>
-                <h1 id="cim">Üdvözöllek a weboldalamon!</h1>
+    <!-- Fő Weboldal Munkaterület (Wix Canvas) -->
+    <div id="main-content" style="display:none;">
+        <div id="wix-canvas">
+            <!-- Kezdő elemek -->
+            <div class="wix-element" style="left: 100px; top: 80px; font-size: 32px; font-family: 'Playfair Display', serif; color: #0000cc; font-weight: bold;">
+                <div class="content-box" contenteditable="false">Üdvözöllek a weboldalamon!</div>
             </div>
-            <div class="drag-item">
-                <span class="drag-handle">⋮⋮ Húzás</span>
-                <p id="szoveg">Szia! Én vagyok Ignác.</p>
+            <div class="wix-element" style="left: 100px; top: 160px; font-size: 18px; font-family: 'Roboto', sans-serif; color: #333333;">
+                <div class="content-box" contenteditable="false">Szia! Én vagyok Ignác. Húzz el bármit ezen az oldalon!</div>
             </div>
         </div>
     </div>
 
-    <!-- Rejtett admin gomb -->
+    <!-- Rejtett admin nyitó gomb -->
     <button class="secret-admin-trigger" onclick="loginAdmin()" title="Admin"></button>
 
-    <!-- Admin Eszköztár -->
+    <!-- Felső Admin Eszköztár -->
     <div id="admin-toolbar">
-        <span style="color:#aaa; font-size:12px; margin-right:5px;">🛠️ Editor</span>
-        <button onclick="addElement('h2')">+ Cím</button>
-        <button onclick="addElement('p')">+ Szöveg</button>
-        <button onclick="addImage()">+ Kép</button>
-        <button onclick="addButton()">+ Gomb</button>
-        <button onclick="changeBgColor()">Háttér</button>
-        <button class="save-btn" onclick="saveAndExit()">💾 Mentés & Kilépés</button>
+        <div>
+            <strong style="color: #4da6ff; margin-right: 15px;">🎨 Wix-Style Builder</strong>
+            <button onclick="addElement('heading')">+ Címsor</button>
+            <button onclick="addElement('text')">+ Szöveg</button>
+            <button onclick="addImage()">+ Kép</button>
+            <button onclick="addButton()">+ Gomb</button>
+            <button onclick="changeCanvasBg()">Háttérszín</button>
+        </div>
+        <div>
+            <button class="save-btn" onclick="saveAndExit()">💾 Mentés & Kilépés</button>
+        </div>
+    </div>
+
+    <!-- Jobb Oldali Testreszabási Panel (Inspector) -->
+    <div id="inspector-panel">
+        <h3>Elem Testreszabása</h3>
+        <div id="no-selection" style="color: #888;">Kattints egy elemre a szerkesztéshez!</div>
+        
+        <div id="selection-controls" style="display: none;">
+            <div class="control-group">
+                <label>Betűtípus (Font Family)</label>
+                <select id="prop-font" onchange="updateStyle('fontFamily', this.value)">
+                    <option value="'Roboto', sans-serif">Roboto</option>
+                    <option value="'Montserrat', sans-serif">Montserrat</option>
+                    <option value="'Open Sans', sans-serif">Open Sans</option>
+                    <option value="'Playfair Display', serif">Playfair Display</option>
+                    <option value="'Poppins', sans-serif">Poppins</option>
+                    <option value="'Oswald', sans-serif">Oswald</option>
+                    <option value="'Pacifico', cursive">Pacifico</option>
+                    <option value="'Lobster', cursive">Lobster</option>
+                    <option value="'Courier Prime', monospace">Courier Prime</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>Betűméret (px)</label>
+                <input type="number" id="prop-size" min="8" max="120" onchange="updateStyle('fontSize', this.value + 'px')">
+            </div>
+
+            <div class="control-group">
+                <label>Szövegszín</label>
+                <input type="color" id="prop-color" onchange="updateStyle('color', this.value)">
+            </div>
+
+            <div class="control-group">
+                <label>Háttérszín</label>
+                <input type="color" id="prop-bg" onchange="updateStyle('backgroundColor', this.value)">
+            </div>
+
+            <div class="control-group">
+                <label>Szöveg igazítás</label>
+                <select id="prop-align" onchange="updateStyle('textAlign', this.value)">
+                    <option value="left">Balra</option>
+                    <option value="center">Középre</option>
+                    <option value="right">Jobbra</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label>Belső margó / Padding (px)</label>
+                <input type="number" id="prop-padding" min="0" max="50" onchange="updateStyle('padding', this.value + 'px')">
+            </div>
+
+            <div class="control-group">
+                <label>Lekerekítés / Border Radius (px)</label>
+                <input type="number" id="prop-radius" min="0" max="100" onchange="updateStyle('borderRadius', this.value + 'px')">
+            </div>
+
+            <div class="control-group">
+                <label>Rétegrend (z-index)</label>
+                <input type="number" id="prop-zindex" min="0" max="999" onchange="updateStyle('zIndex', this.value)">
+            </div>
+
+            <hr style="border-color: #444; margin: 15px 0;">
+            <button onclick="deleteSelected()" style="background: #dc3545; color: white; width: 100%; padding: 8px; border: none; border-radius: 4px; cursor: pointer;">🗑️ Elem Törlése</button>
+        </div>
     </div>
 
     <script>
@@ -169,101 +251,184 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        const contentArea = document.getElementById('szerkesztheto-tartalom');
+        const canvas = document.getElementById('wix-canvas');
         let adminModeOn = false;
-        let sortableInstance = null;
+        let selectedElement = null;
         const HelyesJelszo = "ignac123";
 
-        // reCAPTCHA
+        // reCAPTCHA Kapu
         function onloadCallback() {
             grecaptcha.render('recaptcha-widget', {
                 'sitekey': '6LccpIctAAAAAJ8-HO2hba1QTwODRYv5aSu48Ajq',
                 'callback': function(response) { unlockPage(); }
             });
         }
-
         function bypassCaptcha() {
             let jelszo = prompt("Add meg a bypass jelszót:");
             if (jelszo === HelyesJelszo) { unlockPage(); }
             else if (jelszo !== null) { alert("Hibás jelszó!"); }
         }
-
         function unlockPage() {
             document.getElementById('captcha-overlay').style.display = 'none';
             document.getElementById('main-content').style.display = 'block';
         }
 
-        // Adatok betöltése
+        // Adatok betöltése Firebase-ből
         db.ref('oldalAdatok').on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
-                if (data.html) contentArea.innerHTML = data.html;
-                if (data.bgColor) document.body.style.backgroundColor = data.bgColor;
+                if (data.html) canvas.innerHTML = data.html;
+                if (data.bgColor) canvas.style.backgroundColor = data.bgColor;
             }
         });
 
-        // Admin Bejelentkezés
+        // Admin Mód Bejelentkezés
         function loginAdmin() {
             if (adminModeOn) return;
-
             let jelszo = prompt("Add meg az admin jelszót:");
             if (jelszo === HelyesJelszo) {
                 adminModeOn = true;
                 document.body.classList.add('admin-active');
                 document.getElementById('admin-toolbar').style.display = 'flex';
+                document.getElementById('inspector-panel').style.display = 'block';
                 
-                enableEditingAndDrag();
-                alert("Admin Mód Bekapcsolva!\n\n1. Mozgatás: Húzd a kék '⋮⋮ Húzás' gombot.\n2. Átméretezés: Húzd a doboz jobb alsó sarkát.\n3. Szerkesztés: Kattints a szövegbe.\n4. Törlés: Dupla kattintás az elemen.");
+                enableWixInteractions();
+                alert("Wix Admin Mód Bekapcsolva!\n\n- Mozgatás: Húzd az elemeket a egérrel bárhová.\n- Szerkesztés: Kattints rá, és állítsd be a betűtípust, színt a jobb oldali panelen!\n- Dupla kattintás a szövegre: Átírható.");
             } else if (jelszo !== null) {
                 alert("Hibás jelszó!");
             }
         }
 
-        function enableEditingAndDrag() {
-            // SortableJS inicializálása kizárólag a fogantyúval (.drag-handle)
-            sortableInstance = new Sortable(contentArea, {
-                animation: 150,
-                handle: '.drag-handle',
-                ghostClass: 'sortable-ghost',
-                draggable: '.drag-item'
-            });
-
-            refreshItems();
+        // Drag & Drop + Elem kijelölés
+        function enableWixInteractions() {
+            const elements = canvas.querySelectorAll('.wix-element');
+            elements.forEach(el => makeElementInteractive(el));
         }
 
-        function refreshItems() {
-            const items = contentArea.querySelectorAll('.drag-item');
-            items.forEach(item => {
-                // Csak a belső elemeket tesszük szerkeszthetővé, a fogantyút nem
-                const textElements = item.querySelectorAll('h1, h2, p, a');
-                textElements.forEach(el => el.contentEditable = "true");
+        function makeElementInteractive(el) {
+            let isDragging = false;
+            let startX, startY, initialLeft, initialTop;
 
-                item.ondblclick = function(e) {
-                    if (adminModeOn && e.target.className !== 'drag-handle' && confirm("Törölni szeretnéd ezt az elemet?")) {
-                        item.remove();
-                    }
-                };
+            // Kattintás kijelöléshez
+            el.addEventListener('click', (e) => {
+                if (!adminModeOn) return;
+                e.stopPropagation();
+                selectElement(el);
+            });
+
+            // Dupla kattintás szövegszerkesztéshez
+            const contentBox = el.querySelector('.content-box');
+            if (contentBox) {
+                el.addEventListener('dblclick', (e) => {
+                    if (!adminModeOn) return;
+                    contentBox.contentEditable = "true";
+                    contentBox.focus();
+                });
+                contentBox.addEventListener('blur', () => {
+                    contentBox.contentEditable = "false";
+                });
+            }
+
+            // Húzás (Drag & Drop)
+            el.addEventListener('mousedown', (e) => {
+                if (!adminModeOn || e.target.isContentEditable) return;
+                isDragging = true;
+                startX = e.clientX;
+                startY = e.clientY;
+                initialLeft = el.offsetLeft;
+                initialTop = el.offsetTop;
+
+                selectElement(el);
+
+                function onMouseMove(e) {
+                    if (!isDragging) return;
+                    const dx = e.clientX - startX;
+                    const dy = e.clientY - startY;
+                    el.style.left = (initialLeft + dx) + 'px';
+                    el.style.top = (initialTop + dy) + 'px';
+                }
+
+                function onMouseUp() {
+                    isDragging = false;
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                }
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
             });
         }
 
-        function addElement(tag) {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'drag-item';
-            wrapper.innerHTML = `<span class="drag-handle">⋮⋮ Húzás</span><${tag}>${tag === 'h2' ? 'Új alcím' : 'Új bekezdés szövege...'}</${tag}>`;
-            
-            contentArea.appendChild(wrapper);
-            refreshItems();
+        // Elem Kijelölése & Inspector Frissítése
+        function selectElement(el) {
+            if (selectedElement) selectedElement.classList.remove('selected');
+            selectedElement = el;
+            selectedElement.classList.add('selected');
+
+            document.getElementById('no-selection').style.display = 'none';
+            document.getElementById('selection-controls').style.display = 'block';
+
+            // Inspector mezők kitöltése az elem aktuális stílusával
+            const computedStyle = window.getComputedStyle(el);
+            document.getElementById('prop-size').value = parseInt(computedStyle.fontSize) || 16;
+            document.getElementById('prop-padding').value = parseInt(computedStyle.padding) || 0;
+            document.getElementById('prop-radius').value = parseInt(computedStyle.borderRadius) || 0;
+            document.getElementById('prop-zindex').value = computedStyle.zIndex !== 'auto' ? computedStyle.zIndex : 1;
+            document.getElementById('prop-align').value = computedStyle.textAlign || 'left';
+        }
+
+        // Stílus frissítése az Inspectorból
+        function updateStyle(property, value) {
+            if (selectedElement) {
+                selectedElement.style[property] = value;
+            }
+        }
+
+        function deleteSelected() {
+            if (selectedElement && confirm("Biztosan törlöd a kijelölt elemet?")) {
+                selectedElement.remove();
+                selectedElement = null;
+                document.getElementById('no-selection').style.display = 'block';
+                document.getElementById('selection-controls').style.display = 'none';
+            }
+        }
+
+        // Új Elemek Hozzáadása
+        function addElement(type) {
+            const div = document.createElement('div');
+            div.className = 'wix-element';
+            div.style.left = '150px';
+            div.style.top = '150px';
+
+            if (type === 'heading') {
+                div.style.fontSize = '28px';
+                div.style.fontFamily = "'Montserrat', sans-serif";
+                div.style.fontWeight = "bold";
+                div.innerHTML = `<div class="content-box" contenteditable="false">Új Címsor</div>`;
+            } else if (type === 'text') {
+                div.style.fontSize = '16px';
+                div.style.fontFamily = "'Roboto', sans-serif";
+                div.innerHTML = `<div class="content-box" contenteditable="false">Új szöveges elem helye...</div>`;
+            }
+
+            canvas.appendChild(div);
+            makeElementInteractive(div);
+            selectElement(div);
         }
 
         function addImage() {
-            let url = prompt("Add meg a kép URL címét:");
+            let url = prompt("Add meg a kép URL-jét:");
             if (url) {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'drag-item';
-                wrapper.innerHTML = `<span class="drag-handle">⋮⋮ Húzás</span><img src="${url}">`;
-                
-                contentArea.appendChild(wrapper);
-                refreshItems();
+                const div = document.createElement('div');
+                div.className = 'wix-element';
+                div.style.left = '150px';
+                div.style.top = '150px';
+                div.style.width = '200px';
+                div.innerHTML = `<img src="${url}">`;
+
+                canvas.appendChild(div);
+                makeElementInteractive(div);
+                selectElement(div);
             }
         }
 
@@ -271,41 +436,61 @@
             let text = prompt("Gomb szövege:", "Kattints ide");
             let link = prompt("Hova mutasson a gomb? (URL):", "https://");
             if (text && link) {
-                const wrapper = document.createElement('div');
-                wrapper.className = 'drag-item';
-                wrapper.innerHTML = `<span class="drag-handle">⋮⋮ Húzás</span><a href="${link}" class="btn-link" target="_blank">${text}</a>`;
-                
-                contentArea.appendChild(wrapper);
-                refreshItems();
+                const div = document.createElement('div');
+                div.className = 'wix-element';
+                div.style.left = '150px';
+                div.style.top = '150px';
+                div.style.backgroundColor = '#0000cc';
+                div.style.borderRadius = '5px';
+                div.style.padding = '10px 20px';
+                div.innerHTML = `<a href="${link}" class="btn-link" target="_blank" style="color:white; font-family:'Roboto', sans-serif;">${text}</a>`;
+
+                canvas.appendChild(div);
+                makeElementInteractive(div);
+                selectElement(div);
             }
         }
 
-        function changeBgColor() {
-            let color = prompt("Háttérszín (pl. #ffffff, #f4f4f4, lightgray):");
+        function changeCanvasBg() {
+            let color = prompt("Adja meg a vászon háttérszínét (pl. #ffffff, #f4f4f4, lightgray):");
             if (color) {
-                document.body.style.backgroundColor = color;
+                canvas.style.backgroundColor = color;
             }
         }
 
+        // Munkaterület kattintás kijelölés megszüntetéséhez
+        canvas.addEventListener('click', (e) => {
+            if (e.target === canvas && selectedElement) {
+                selectedElement.classList.remove('selected');
+                selectedElement = null;
+                document.getElementById('no-selection').style.display = 'block';
+                document.getElementById('selection-controls').style.display = 'none';
+            }
+        });
+
+        // Mentés és Kilépés
         function saveAndExit() {
             adminModeOn = false;
             document.body.classList.remove('admin-active');
             document.getElementById('admin-toolbar').style.display = 'none';
+            document.getElementById('inspector-panel').style.display = 'none';
 
-            if (sortableInstance) {
-                sortableInstance.destroy();
+            if (selectedElement) {
+                selectedElement.classList.remove('selected');
+                selectedElement = null;
             }
 
-            // Szerkeszthetőség kikapcsolása
-            const textElements = contentArea.querySelectorAll('h1, h2, p, a');
-            textElements.forEach(el => el.contentEditable = "false");
+            // Kikapcsoljuk a contenteditable állapotot
+            const boxes = canvas.querySelectorAll('.content-box');
+            boxes.forEach(b => b.contentEditable = "false");
 
+            // Mentés az adatbázisba
             db.ref('oldalAdatok').set({
-                html: contentArea.innerHTML,
-                bgColor: document.body.style.backgroundColor
+                html: canvas.innerHTML,
+                bgColor: canvas.style.backgroundColor
             });
 
-            alert("Minden módosítás elmentve!");
+            alert("Minden módosítás, pozíció és betűtípus sikeresen elmentve!");
         }
     </script>
 
