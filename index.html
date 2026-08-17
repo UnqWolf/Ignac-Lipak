@@ -14,12 +14,13 @@
 
     <style>
         * { box-sizing: border-box; }
-        body {
+        html, body {
             margin: 0;
             padding: 0;
-            background-color: #f8f9fa;
+            width: 100%;
+            height: 100%;
+            background-color: #ffffff;
             font-family: 'Roboto', sans-serif;
-            min-height: 100vh;
             overflow-x: hidden;
         }
 
@@ -52,14 +53,13 @@
             width: 100%;
             min-height: 100vh;
             background-color: #ffffff;
-            transition: margin 0.2s ease, width 0.2s ease;
+            transition: width 0.2s ease, padding 0.2s ease;
         }
 
-        /* Admin módban a keret eltolása, hogy a felső/jobb UI ne takarja el az elemeket */
+        /* Admin módban a keret eltolása belső margóval (nincs fehér sáv kilógás) */
         body.admin-active #wix-canvas {
-            margin-top: 52px;
+            padding-top: 60px;
             width: calc(100% - 280px);
-            min-height: calc(100vh - 52px);
         }
 
         /* Szabadon mozgatható elemek stílusa */
@@ -156,17 +156,9 @@
         <button class="bypass-btn" onclick="bypassCaptcha()">Belépés jelszóval (bypass)</button>
     </div>
 
-    <!-- Fő Weboldal Munkaterület (Wix Canvas) -->
+    <!-- Fő Weboldal Munkaterület (Alapból TELJESEN ÜRES) -->
     <div id="main-content" style="display:none;">
-        <div id="wix-canvas">
-            <!-- Kezdő elemek -->
-            <div class="wix-element" style="left: 40px; top: 40px; font-size: 32px; font-family: 'Playfair Display', serif; color: #0000cc; font-weight: bold;">
-                <div class="content-box" contenteditable="false">Üdvözöllek a weboldalamon!</div>
-            </div>
-            <div class="wix-element" style="left: 40px; top: 110px; font-size: 18px; font-family: 'Roboto', sans-serif; color: #333333;">
-                <div class="content-box" contenteditable="false">Szia! Én vagyok Ignác. Húzz el bármit ezen az oldalon!</div>
-            </div>
-        </div>
+        <div id="wix-canvas"></div>
     </div>
 
     <!-- Rejtett admin nyitó gomb -->
@@ -187,7 +179,7 @@
         </div>
     </div>
 
-    <!-- Jobb Oldali Testreszabási Panel (Inspector) -->
+    <!-- Jobb Oldali Testreszabási Panel -->
     <div id="inspector-panel">
         <h3>Elem Testreszabása</h3>
         <div id="no-selection" style="color: #888;">Kattints egy elemre a szerkesztéshez!</div>
@@ -292,7 +284,10 @@
             const data = snapshot.val();
             if (data) {
                 if (data.html) canvas.innerHTML = data.html;
-                if (data.bgColor) canvas.style.backgroundColor = data.bgColor;
+                if (data.bgColor) {
+                    canvas.style.backgroundColor = data.bgColor;
+                    document.body.style.backgroundColor = data.bgColor;
+                }
                 if (adminModeOn) enableWixInteractions();
             }
         });
@@ -313,7 +308,7 @@
             }
         }
 
-        // Drag & Drop + Elem interakciók
+        // Drag & Drop
         function enableWixInteractions() {
             const elements = canvas.querySelectorAll('.wix-element');
             elements.forEach(el => makeElementInteractive(el));
@@ -323,14 +318,12 @@
             let isDragging = false;
             let startX, startY, initialLeft, initialTop;
 
-            // Kattintás kijelöléshez
             el.onclick = (e) => {
                 if (!adminModeOn) return;
                 e.stopPropagation();
                 selectElement(el);
             };
 
-            // Dupla kattintás közvetlen szövegszerkesztéshez a vásznon
             const contentBox = el.querySelector('.content-box');
             if (contentBox) {
                 el.ondblclick = (e) => {
@@ -346,7 +339,6 @@
                 };
             }
 
-            // Húzás (Drag & Drop)
             el.onmousedown = (e) => {
                 if (!adminModeOn || e.target.isContentEditable) return;
                 isDragging = true;
@@ -376,7 +368,6 @@
             };
         }
 
-        // Elem Kijelölése & Inspector Frissítése
         function selectElement(el) {
             if (selectedElement) selectedElement.classList.remove('selected');
             selectedElement = el;
@@ -402,7 +393,6 @@
             document.getElementById('prop-align').value = computedStyle.textAlign || 'left';
         }
 
-        // Szöveg frissítése Inspectorból
         function updateTextContent(val) {
             if (selectedElement) {
                 const contentBox = selectedElement.querySelector('.content-box') || selectedElement.querySelector('.btn-link');
@@ -412,7 +402,6 @@
             }
         }
 
-        // Stílus frissítése az Inspectorból
         function updateStyle(property, value) {
             if (selectedElement) {
                 selectedElement.style[property] = value;
@@ -428,12 +417,11 @@
             }
         }
 
-        // Új Elemek Hozzáadása
         function addElement(type) {
             const div = document.createElement('div');
             div.className = 'wix-element';
             div.style.left = '50px';
-            div.style.top = '50px';
+            div.style.top = '80px';
 
             if (type === 'heading') {
                 div.style.fontSize = '28px';
@@ -457,7 +445,7 @@
                 const div = document.createElement('div');
                 div.className = 'wix-element';
                 div.style.left = '50px';
-                div.style.top = '50px';
+                div.style.top = '80px';
                 div.style.width = '200px';
                 div.innerHTML = `<img src="${url}">`;
 
@@ -474,7 +462,7 @@
                 const div = document.createElement('div');
                 div.className = 'wix-element';
                 div.style.left = '50px';
-                div.style.top = '50px';
+                div.style.top = '80px';
                 div.style.backgroundColor = '#0000cc';
                 div.style.borderRadius = '5px';
                 div.style.padding = '10px 20px';
@@ -490,10 +478,10 @@
             let color = prompt("Adja meg a vászon háttérszínét (pl. #ffffff, #f4f4f4, lightgray):");
             if (color) {
                 canvas.style.backgroundColor = color;
+                document.body.style.backgroundColor = color;
             }
         }
 
-        // Munkaterület kattintás kijelölés megszüntetéséhez
         canvas.onclick = (e) => {
             if (e.target === canvas && selectedElement) {
                 selectedElement.classList.remove('selected');
@@ -503,7 +491,6 @@
             }
         };
 
-        // Mentés és Kilépés
         function saveAndExit() {
             adminModeOn = false;
             document.body.classList.remove('admin-active');
@@ -523,7 +510,7 @@
                 bgColor: canvas.style.backgroundColor
             });
 
-            alert("Minden módosítás és szöveg sikeresen elmentve!");
+            alert("Sikeres mentés!");
         }
     </script>
 
