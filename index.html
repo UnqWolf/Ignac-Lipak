@@ -35,10 +35,6 @@
             margin-top: 20px;
         }
 
-        .bypass-btn:hover {
-            color: #000;
-        }
-
         body {
             background-color: #ffffff;
             color: #000000;
@@ -49,7 +45,7 @@
 
         #main-content { display: none; }
         h1, h2 { color: #0000cc; margin-top: 0; }
-        img { max-width: 100%; height: auto; margin: 10px 0; display: block; }
+        img { max-width: 100%; height: auto; display: block; }
         
         .btn-link {
             display: inline-block;
@@ -58,10 +54,10 @@
             color: white;
             text-decoration: none;
             border-radius: 4px;
-            margin: 5px 0;
         }
 
-        /* Rejtett admin gomb */
+        /* Normál nézetben rejtett elemek */
+        .drag-handle { display: none; }
         .secret-admin-trigger {
             position: fixed; bottom: 0; right: 0;
             width: 40px; height: 40px;
@@ -87,28 +83,44 @@
         #admin-toolbar button:hover { background: #555; }
         #admin-toolbar button.save-btn { background: #28a745; border-color: #28a745; font-weight: bold; }
 
-        /* Stílusok Drag & Drop szerkesztés közben */
+        /* Admin Aktív Stílusok: Átméretezés + Fogantyú */
         .admin-active .drag-item {
-            outline: 2px dashed #ff3333 !important;
-            background-color: rgba(255, 0, 0, 0.02);
-            cursor: grab;
             position: relative;
-            padding: 6px;
-            margin-bottom: 10px;
+            outline: 2px dashed #007bff !important;
+            background-color: rgba(0, 123, 255, 0.03);
+            padding: 25px 10px 10px 10px;
+            margin-bottom: 15px;
             border-radius: 4px;
+            /* ÁTMÉRETEZHETŐSÉG */
+            resize: both;
+            overflow: auto;
+            min-height: 40px;
+            min-width: 150px;
         }
 
-        .admin-active .drag-item:active {
+        .admin-active .drag-handle {
+            display: inline-block;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            background: #007bff;
+            color: white;
+            font-size: 10px;
+            font-family: sans-serif;
+            padding: 2px 6px;
+            border-radius: 2px;
+            cursor: grab;
+            user-select: none;
+            z-index: 10;
+        }
+
+        .admin-active .drag-handle:active {
             cursor: grabbing;
         }
 
         .sortable-ghost {
             opacity: 0.3;
-            background: #ffcccc !important;
-        }
-        
-        .sortable-chosen {
-            background: #fff0f0 !important;
+            background: #cce5ff !important;
         }
     </style>
 </head>
@@ -124,17 +136,23 @@
     <!-- Fő Weboldal Tartalom -->
     <div id="main-content">
         <div id="szerkesztheto-tartalom">
-            <div class="drag-item"><h1 id="cim">Üdvözöllek a weboldalamon!</h1></div>
-            <div class="drag-item"><p id="szoveg">Szia! Én vagyok Ignác.</p></div>
+            <div class="drag-item">
+                <span class="drag-handle">⋮⋮ Húzás</span>
+                <h1 id="cim">Üdvözöllek a weboldalamon!</h1>
+            </div>
+            <div class="drag-item">
+                <span class="drag-handle">⋮⋮ Húzás</span>
+                <p id="szoveg">Szia! Én vagyok Ignác.</p>
+            </div>
         </div>
     </div>
 
-    <!-- Rejtett admin kattintási pont -->
+    <!-- Rejtett admin gomb -->
     <button class="secret-admin-trigger" onclick="loginAdmin()" title="Admin"></button>
 
     <!-- Admin Eszköztár -->
     <div id="admin-toolbar">
-        <span style="color:#aaa; font-size:12px; margin-right:5px;">🖐️ Drag & Drop Admin</span>
+        <span style="color:#aaa; font-size:12px; margin-right:5px;">🛠️ Editor</span>
         <button onclick="addElement('h2')">+ Cím</button>
         <button onclick="addElement('p')">+ Szöveg</button>
         <button onclick="addImage()">+ Kép</button>
@@ -144,7 +162,7 @@
     </div>
 
     <script>
-        // 1. Firebase Konfiguráció
+        // Firebase Konfiguráció
         const firebaseConfig = {
             databaseURL: "https://vercel-custom-il-default-rtdb.europe-west1.firebasedatabase.app/"
         };
@@ -156,24 +174,18 @@
         let sortableInstance = null;
         const HelyesJelszo = "ignac123";
 
-        // 2. reCAPTCHA
+        // reCAPTCHA
         function onloadCallback() {
             grecaptcha.render('recaptcha-widget', {
                 'sitekey': '6LccpIctAAAAAJ8-HO2hba1QTwODRYv5aSu48Ajq',
-                'callback': function(response) {
-                    unlockPage();
-                }
+                'callback': function(response) { unlockPage(); }
             });
         }
 
-        // reCAPTCHA átugrása jelszóval
         function bypassCaptcha() {
             let jelszo = prompt("Add meg a bypass jelszót:");
-            if (jelszo === HelyesJelszo) {
-                unlockPage();
-            } else if (jelszo !== null) {
-                alert("Hibás jelszó!");
-            }
+            if (jelszo === HelyesJelszo) { unlockPage(); }
+            else if (jelszo !== null) { alert("Hibás jelszó!"); }
         }
 
         function unlockPage() {
@@ -181,7 +193,7 @@
             document.getElementById('main-content').style.display = 'block';
         }
 
-        // 3. Adatok betöltése
+        // Adatok betöltése
         db.ref('oldalAdatok').on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
@@ -190,7 +202,7 @@
             }
         });
 
-        // 4. Admin bejelentkezés
+        // Admin Bejelentkezés
         function loginAdmin() {
             if (adminModeOn) return;
 
@@ -201,17 +213,18 @@
                 document.getElementById('admin-toolbar').style.display = 'flex';
                 
                 enableEditingAndDrag();
-                alert("Drag & Drop Admin Mód Bekapcsolva!\n\n- Elem mozgatható: Fogd meg és húzd a kívánt helyre.\n- Szöveg átírása: Kattints bele közvetlenül.\n- Törlés: Dupla kattintás az elemen.");
+                alert("Admin Mód Bekapcsolva!\n\n1. Mozgatás: Húzd a kék '⋮⋮ Húzás' gombot.\n2. Átméretezés: Húzd a doboz jobb alsó sarkát.\n3. Szerkesztés: Kattints a szövegbe.\n4. Törlés: Dupla kattintás az elemen.");
             } else if (jelszo !== null) {
                 alert("Hibás jelszó!");
             }
         }
 
         function enableEditingAndDrag() {
+            // SortableJS inicializálása kizárólag a fogantyúval (.drag-handle)
             sortableInstance = new Sortable(contentArea, {
                 animation: 150,
+                handle: '.drag-handle',
                 ghostClass: 'sortable-ghost',
-                chosenClass: 'sortable-chosen',
                 draggable: '.drag-item'
             });
 
@@ -221,9 +234,12 @@
         function refreshItems() {
             const items = contentArea.querySelectorAll('.drag-item');
             items.forEach(item => {
-                item.contentEditable = "true";
+                // Csak a belső elemeket tesszük szerkeszthetővé, a fogantyút nem
+                const textElements = item.querySelectorAll('h1, h2, p, a');
+                textElements.forEach(el => el.contentEditable = "true");
+
                 item.ondblclick = function(e) {
-                    if (adminModeOn && confirm("Törölni szeretnéd ezt az elemet?")) {
+                    if (adminModeOn && e.target.className !== 'drag-handle' && confirm("Törölni szeretnéd ezt az elemet?")) {
                         item.remove();
                     }
                 };
@@ -233,10 +249,7 @@
         function addElement(tag) {
             const wrapper = document.createElement('div');
             wrapper.className = 'drag-item';
-            
-            const el = document.createElement(tag);
-            el.innerText = tag === 'h2' ? 'Új alcím' : 'Új bekezdés szövege...';
-            wrapper.appendChild(el);
+            wrapper.innerHTML = `<span class="drag-handle">⋮⋮ Húzás</span><${tag}>${tag === 'h2' ? 'Új alcím' : 'Új bekezdés szövege...'}</${tag}>`;
             
             contentArea.appendChild(wrapper);
             refreshItems();
@@ -247,10 +260,7 @@
             if (url) {
                 const wrapper = document.createElement('div');
                 wrapper.className = 'drag-item';
-                
-                const img = document.createElement('img');
-                img.src = url;
-                wrapper.appendChild(img);
+                wrapper.innerHTML = `<span class="drag-handle">⋮⋮ Húzás</span><img src="${url}">`;
                 
                 contentArea.appendChild(wrapper);
                 refreshItems();
@@ -263,13 +273,7 @@
             if (text && link) {
                 const wrapper = document.createElement('div');
                 wrapper.className = 'drag-item';
-                
-                const a = document.createElement('a');
-                a.className = 'btn-link';
-                a.href = link;
-                a.innerText = text;
-                a.target = "_blank";
-                wrapper.appendChild(a);
+                wrapper.innerHTML = `<span class="drag-handle">⋮⋮ Húzás</span><a href="${link}" class="btn-link" target="_blank">${text}</a>`;
                 
                 contentArea.appendChild(wrapper);
                 refreshItems();
@@ -292,18 +296,16 @@
                 sortableInstance.destroy();
             }
 
-            const items = contentArea.querySelectorAll('.drag-item');
-            items.forEach(item => {
-                item.contentEditable = "false";
-                item.ondblclick = null;
-            });
+            // Szerkeszthetőség kikapcsolása
+            const textElements = contentArea.querySelectorAll('h1, h2, p, a');
+            textElements.forEach(el => el.contentEditable = "false");
 
             db.ref('oldalAdatok').set({
                 html: contentArea.innerHTML,
                 bgColor: document.body.style.backgroundColor
             });
 
-            alert("Minden módosítás és az elemek új sorrendje elmentve!");
+            alert("Minden módosítás elmentve!");
         }
     </script>
 
