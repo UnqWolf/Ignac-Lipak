@@ -9,14 +9,13 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <!-- Google reCAPTCHA -->
     <script src="https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit" async defer></script>
+    <!-- SortableJS a Drag & Drop funkcionalitáshoz -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
-        /* Teljes képernyős takaró a reCAPTCHA-nak */
         #captcha-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
             background-color: #ffffff;
             z-index: 9999;
             display: flex;
@@ -34,76 +33,69 @@
             line-height: 1.6;
         }
 
-        /* Fő tartalom (alapból rejtve, amíg a captcha nincs kész) */
-        #main-content {
-            display: none;
+        #main-content { display: none; }
+        h1, h2 { color: #0000cc; margin-top: 0; }
+        img { max-width: 100%; height: auto; margin: 10px 0; display: block; }
+        
+        .btn-link {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #0000cc;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 5px 0;
         }
 
-        h1 {
-            color: #0000cc;
-            border-bottom: 1px solid #cccccc;
-            padding-bottom: 5px;
-        }
-
-        img {
-            max-width: 100%;
-            height: auto;
-            margin: 10px 0;
-            display: block;
-        }
-
-        /* Rejtett gomb a jobb alsó sarokban */
+        /* Rejtett admin gomb */
         .secret-admin-trigger {
-            position: fixed;
-            bottom: 0;
-            right: 0;
-            width: 40px;
-            height: 40px;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            z-index: 1000;
+            position: fixed; bottom: 0; right: 0;
+            width: 40px; height: 40px;
+            background: transparent; border: none;
+            cursor: pointer; z-index: 1000;
         }
 
-        /* Admin Eszköztár a képernyő tetején */
+        /* Admin Eszköztár */
         #admin-toolbar {
             display: none;
-            position: fixed;
-            top: 15px;
-            right: 15px;
-            background: #222222;
-            padding: 10px 15px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            z-index: 2000;
-            font-family: sans-serif;
+            position: fixed; top: 15px; right: 15px;
+            background: #111111; padding: 10px 15px;
+            border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+            z-index: 2000; font-family: sans-serif;
+            gap: 6px; align-items: center; flex-wrap: wrap;
         }
 
         #admin-toolbar button {
-            background: #444;
-            color: white;
-            border: 1px solid #666;
-            padding: 6px 12px;
-            margin-left: 5px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 13px;
+            background: #333; color: white; border: 1px solid #555;
+            padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;
         }
 
-        #admin-toolbar button:hover {
-            background: #666;
-        }
+        #admin-toolbar button:hover { background: #555; }
+        #admin-toolbar button.save-btn { background: #28a745; border-color: #28a745; font-weight: bold; }
 
-        #admin-toolbar button.save-btn {
-            background: #28a745;
-            border-color: #28a745;
-            font-weight: bold;
-        }
-
-        .editable-active {
+        /* Stílusok Drag & Drop szerkesztés közben */
+        .admin-active .drag-item {
             outline: 2px dashed #ff3333 !important;
-            background-color: rgba(255, 0, 0, 0.03);
-            cursor: text;
+            background-color: rgba(255, 0, 0, 0.02);
+            cursor: grab;
+            position: relative;
+            padding: 6px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .admin-active .drag-item:active {
+            cursor: grabbing;
+        }
+
+        /* Húzás közbeni vizuális visszajelzés */
+        .sortable-ghost {
+            opacity: 0.3;
+            background: #ffcccc !important;
+        }
+        
+        .sortable-chosen {
+            background: #fff0f0 !important;
         }
     </style>
 </head>
@@ -118,20 +110,22 @@
     <!-- Fő Weboldal Tartalom -->
     <div id="main-content">
         <div id="szerkesztheto-tartalom">
-            <h1 id="cim">Üdvözöllek a weboldalamon!</h1>
-            <p id="szoveg">Szia! Én vagyok Ignác.</p>
+            <div class="drag-item"><h1 id="cim">Üdvözöllek a weboldalamon!</h1></div>
+            <div class="drag-item"><p id="szoveg">Szia! Én vagyok Ignác.</p></div>
         </div>
     </div>
 
-    <!-- Rejtett kattintási pont az admin módhoz -->
+    <!-- Rejtett admin kattintási pont -->
     <button class="secret-admin-trigger" onclick="loginAdmin()" title="Admin"></button>
 
     <!-- Admin Eszköztár -->
     <div id="admin-toolbar">
-        <span style="color:white; font-size:12px; margin-right:10px;">🛠️ Admin Panel</span>
-        <button onclick="addParagraph()">+ Új szöveg</button>
+        <span style="color:#aaa; font-size:12px; margin-right:5px;">🖐️ Drag & Drop Admin</span>
+        <button onclick="addElement('h2')">+ Cím</button>
+        <button onclick="addElement('p')">+ Szöveg</button>
         <button onclick="addImage()">+ Kép</button>
-        <button onclick="changeBgColor()">Háttérszín</button>
+        <button onclick="addButton()">+ Gomb</button>
+        <button onclick="changeBgColor()">Háttér</button>
         <button class="save-btn" onclick="saveAndExit()">💾 Mentés & Kilépés</button>
     </div>
 
@@ -145,21 +139,21 @@
 
         const contentArea = document.getElementById('szerkesztheto-tartalom');
         let adminModeOn = false;
+        let sortableInstance = null;
         const HelyesJelszo = "ignac123";
 
-        // 2. reCAPTCHA inicializálása az oldal nyitásakor
+        // 2. reCAPTCHA
         function onloadCallback() {
             grecaptcha.render('recaptcha-widget', {
                 'sitekey': '6LccpIctAAAAAJ8-HO2hba1QTwODRYv5aSu48Ajq',
                 'callback': function(response) {
-                    // Ha kipipálta a recaptcha-t, eltüntetjük a takarót és megmutatjuk az oldalt
                     document.getElementById('captcha-overlay').style.display = 'none';
                     document.getElementById('main-content').style.display = 'block';
                 }
             });
         }
 
-        // 3. Adatok betöltése az adatbázisból
+        // 3. Adatok betöltése
         db.ref('oldalAdatok').on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
@@ -175,60 +169,94 @@
             let jelszo = prompt("Add meg az admin jelszót:");
             if (jelszo === HelyesJelszo) {
                 adminModeOn = true;
+                document.body.classList.add('admin-active');
                 document.getElementById('admin-toolbar').style.display = 'flex';
-                enableEditing();
-                alert("Admin mód bekapcsolva!\n- Kattints a szövegekbe az átíráshoz.\n- Dupla kattintással törölhetsz elemeket.");
+                
+                enableEditingAndDrag();
+                alert("Drag & Drop Admin Mód Bekapcsolva!\n\n- Elem mozgatható: Fogd meg és húzd a kívánt helyre.\n- Szöveg átírása: Kattints bele közvetlenül.\n- Törlés: Dupla kattintás az elemen.");
             } else if (jelszo !== null) {
                 alert("Hibás jelszó!");
             }
         }
 
-        // Szerkesztési funkciók bekapcsolása
-        function enableEditing() {
-            const children = contentArea.children;
-            for (let child of children) {
-                child.contentEditable = "true";
-                child.classList.add('editable-active');
-                child.ondblclick = function() {
+        // Drag and drop + szerkesztés aktiválása
+        function enableEditingAndDrag() {
+            // SortableJS elindítása
+            sortableInstance = new Sortable(contentArea, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                draggable: '.drag-item'
+            });
+
+            // Elemek szerkeszthetővé tétele
+            refreshItems();
+        }
+
+        function refreshItems() {
+            const items = contentArea.querySelectorAll('.drag-item');
+            items.forEach(item => {
+                item.contentEditable = "true";
+                item.ondblclick = function(e) {
                     if (adminModeOn && confirm("Törölni szeretnéd ezt az elemet?")) {
-                        this.remove();
+                        item.remove();
                     }
                 };
-            }
+            });
         }
 
-        // Új bekezdés hozzáadása
-        function addParagraph() {
-            const p = document.createElement('p');
-            p.innerText = "Új szöveg helye... (kattints az átíráshoz)";
-            p.contentEditable = "true";
-            p.classList.add('editable-active');
-            p.ondblclick = function() {
-                if (adminModeOn && confirm("Törölni szeretnéd ezt az elemet?")) {
-                    this.remove();
-                }
-            };
-            contentArea.appendChild(p);
+        // Elemek hozzáadása (Cím, Szöveg)
+        function addElement(tag) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'drag-item';
+            
+            const el = document.createElement(tag);
+            el.innerText = tag === 'h2' ? 'Új alcím' : 'Új bekezdés szövege...';
+            wrapper.appendChild(el);
+            
+            contentArea.appendChild(wrapper);
+            refreshItems();
         }
 
-        // Új kép hozzáadása
+        // Kép hozzáadása
         function addImage() {
             let url = prompt("Add meg a kép URL címét:");
             if (url) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'drag-item';
+                
                 const img = document.createElement('img');
                 img.src = url;
-                img.ondblclick = function() {
-                    if (adminModeOn && confirm("Törölni szeretnéd ezt a képet?")) {
-                        this.remove();
-                    }
-                };
-                contentArea.appendChild(img);
+                wrapper.appendChild(img);
+                
+                contentArea.appendChild(wrapper);
+                refreshItems();
             }
         }
 
-        // Háttérszín megváltoztatása
+        // Gomb hozzáadása
+        function addButton() {
+            let text = prompt("Gomb szövege:", "Kattints ide");
+            let link = prompt("Hova mutasson a gomb? (URL):", "https://");
+            if (text && link) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'drag-item';
+                
+                const a = document.createElement('a');
+                a.className = 'btn-link';
+                a.href = link;
+                a.innerText = text;
+                a.target = "_blank";
+                wrapper.appendChild(a);
+                
+                contentArea.appendChild(wrapper);
+                refreshItems();
+            }
+        }
+
+        // Háttérszín
         function changeBgColor() {
-            let color = prompt("Adja meg a háttérszínt (pl. #f4f4f4, lightblue, white):");
+            let color = prompt("Háttérszín (pl. #ffffff, #f4f4f4, lightgray):");
             if (color) {
                 document.body.style.backgroundColor = color;
             }
@@ -237,22 +265,28 @@
         // Mentés és Kilépés
         function saveAndExit() {
             adminModeOn = false;
+            document.body.classList.remove('admin-active');
             document.getElementById('admin-toolbar').style.display = 'none';
 
-            // Szerkesztő keretek eltávolítása
-            const children = contentArea.children;
-            for (let child of children) {
-                child.contentEditable = "false";
-                child.classList.remove('editable-active');
+            // Drag and drop leállítása
+            if (sortableInstance) {
+                sortableInstance.destroy();
             }
 
-            // Mentés a Firebase adatbázisba
+            // Szerkeszthetőség kikapcsolása a mentés előtt
+            const items = contentArea.querySelectorAll('.drag-item');
+            items.forEach(item => {
+                item.contentEditable = "false";
+                item.ondblclick = null;
+            });
+
+            // Mentés Firebase-be
             db.ref('oldalAdatok').set({
                 html: contentArea.innerHTML,
                 bgColor: document.body.style.backgroundColor
             });
 
-            alert("Minden módosítás sikeresen elmentve!");
+            alert("Minden módosítás és az elemek új sorrendje elmentve!");
         }
     </script>
 
