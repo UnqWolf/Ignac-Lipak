@@ -7,6 +7,8 @@
     <!-- Firebase SDK betöltése -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <!-- Google reCAPTCHA Script -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
         body {
             background-color: #ffffff;
@@ -20,28 +22,28 @@
             border-bottom: 1px solid #cccccc;
             padding-bottom: 5px;
         }
-        /* Diszkrét, négyzet alakú gomb a jobb alsó sarokban */
+        /* Teljesen rejtett gomb a jobb alsó sarokban */
         .admin-btn {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 30px;
-            height: 30px;
-            background: #ff3333;
-            color: white;
+            bottom: 0;
+            right: 0;
+            width: 40px;
+            height: 40px;
+            background: transparent;
             border: none;
-            font-size: 14px;
             cursor: pointer;
-            border-radius: 4px;
             z-index: 1000;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
         .editable-active {
             outline: 2px dashed #ff3333;
-            background-color: rgba(255, 0, 0, 0.05);
+            background-color: rgba(250, 0, 0, 0.05);
+        }
+        /* reCAPTCHA doboz stílusa */
+        #recaptcha-container {
+            position: fixed;
+            bottom: 50px;
+            right: 20px;
+            z-index: 1001;
         }
     </style>
 </head>
@@ -53,8 +55,11 @@
         <p contenteditable="false" id="szoveg">Szia! Én vagyok Ignác.</p>
     </div>
 
-    <!-- Jobb alsó sarok admin gomb -->
-    <button class="admin-btn" onclick="toggleAdminMode()" id="adminGomb" title="Admin">⚙️</button>
+    <!-- Rejtett gomb a jobb alsó sarokban -->
+    <button class="admin-btn" onclick="triggerAdmin()" title="Admin"></button>
+
+    <!-- reCAPTCHA widget -->
+    <div id="recaptcha-container"></div>
 
     <script>
         // 1. Firebase konfiguráció
@@ -67,7 +72,7 @@
         const cimElem = document.getElementById('cim');
         const szovegElem = document.getElementById('szoveg');
 
-        // 2. Adatok automatikus betöltése az oldal megnyitásakor
+        // 2. Adatok automatikus betöltése
         db.ref('oldalAdatok').on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
@@ -77,37 +82,56 @@
         });
 
         let adminModeOn = false;
+        const HelyesJelszo = "ignac123"; // Itt a jelszavad
 
-        function toggleAdminMode() {
-            adminModeOn = !adminModeOn;
-            const gomb = document.getElementById('adminGomb');
-
-            if (adminModeOn) {
-                gomb.innerText = "💾";
-                gomb.style.background = "#33cc33";
-                
-                cimElem.contentEditable = "true";
-                szovegElem.contentEditable = "true";
-                
-                cimElem.classList.add('editable-active');
-                szovegElem.classList.add('editable-active');
+        function triggerAdmin() {
+            if (!adminModeOn) {
+                // Ha még nincs bent, először reCAPTCHA ellenőrzés
+                grecaptcha.ready(function() {
+                    grecaptcha.render('recaptcha-container', {
+                        'sitekey': '6LccpIctAAAAAJ8-HO2hba1QTwODRYv5aSu48Ajq',
+                        'callback': function(response) {
+                            // Ha a reCAPTCHA sikeres volt, töröljük a widgetet és kérjük a jelszót
+                            document.getElementById('recaptcha-container').innerHTML = '';
+                            ellenorizJelszo();
+                        }
+                    });
+                });
             } else {
-                gomb.innerText = "⚙️";
-                gomb.style.background = "#ff3333";
-                
+                // Mentés, ha már szerkesztési módban van
+                adminModeOn = false;
                 cimElem.contentEditable = "false";
                 szovegElem.contentEditable = "false";
                 
                 cimElem.classList.remove('editable-active');
                 szovegElem.classList.remove('editable-active');
 
-                // Adatok csendes mentése a Firebase-be
                 db.ref('oldalAdatok').set({
                     cim: cimElem.innerText,
                     szoveg: szovegElem.innerText
                 });
+                alert("Módosítások elmentve az adatbázisba!");
             }
         }
+
+        function ellenorizJelszo() {
+            let jelszo = prompt("Add meg az admin jelszót:");
+            if (jelszo === HelyesJelszo) {
+                adminModeOn = true;
+                cimElem.contentEditable = "true";
+                szovegElem.contentEditable = "true";
+                
+                cimElem.classList.add('editable-active');
+                szovegElem.classList.add('editable-active');
+                alert("Admin mód bekapcsolva! Kattints újra a jobb alsó sarokba a mentéshez.");
+            } else if (jelszo !== null) {
+                alert("Hibás jelszó!");
+            }
+        }
+    </script>
+
+</body>
+</html>
     </script>
 
 </body>
